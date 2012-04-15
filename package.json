@@ -1,0 +1,13 @@
+{
+  "name": "jadiTest",
+  "description": "ioc container based test tool",
+  "version": "0.0.1-beta",
+  "author": "yunx <yunxdev@gmail.com>",
+  "keywords": ["jadi", "ioc", "container", "unit test", "test"],
+  "repository": "git://github.com/yunx/jadiTest.git",
+  "main": "./src/testPlugIn.js",
+  "dependencies": {
+    "jadi": "*"
+  },
+  "engines": { "node":">= 0.6.14" }
+}
