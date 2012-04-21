@@ -179,7 +179,7 @@ exports.jadiTest = function (jadiInstance){
 					}					
 					for(var i=0; i<result.length; i++){
 						var caseResult = result[i];
-						if(caseResult === undefined){
+						if(caseResult === undefined || result.length === 0){
 							continue;
 						}
 						if(caseResult.getResult() === undefined){
