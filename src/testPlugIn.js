@@ -1,5 +1,6 @@
+"use strict";
 exports.jadiTest = function (jadiInstance){
-	jadi = jadiInstance || require("jadi").newInstance();
+	var jadi = jadiInstance || require("jadi").newInstance();
 	
 	jadi.clazz("jadi.test.Tester", function Tester(utils){
 		var expectedException = undefined;			
@@ -14,13 +15,15 @@ exports.jadiTest = function (jadiInstance){
 				var that = this;
 				started++;
 				return function(){
-					try{							
+					try{		
 						fn.apply(that,arguments);
 						testResult.pass = true;
 					}
 					catch(e){
 						if(!that.expectException(e)){
 							testResult.pass = false;
+							started = finished = 0;
+							return;
 						}
 						else{
 							testResult.pass = true;
