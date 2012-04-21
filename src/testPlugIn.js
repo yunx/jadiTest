@@ -1,6 +1,5 @@
 exports.jadiTest = function (jadiInstance){
-	var jadi = require("jadi").newInstance;
-	jadi = jadiInstance || jadi();
+	jadi = jadiInstance || require("jadi").newInstance();
 	
 	jadi.clazz("jadi.test.Tester", function Tester(utils){
 		var expectedException = undefined;			
@@ -106,7 +105,7 @@ exports.jadiTest = function (jadiInstance){
 				}
 				return this;
 			},
-			executes : function(){
+			executes : function(runMethodPrefix){
 				var testResults = {};
 				var suites = testContext.getSuites();
 				for(var sname in suites){
@@ -116,7 +115,7 @@ exports.jadiTest = function (jadiInstance){
 						var testCase = suit[i]["case"];
 						var path = suit[i]["path"]
 						for(var name in testCase){
-							if(name === undefined || name.indexOf("test") !== 0){
+							if(name === undefined || name.indexOf(runMethodPrefix) !== 0){
 								continue;
 							}
 							var caseMethod = testCase[name];
@@ -165,26 +164,9 @@ exports.jadiTest = function (jadiInstance){
 			return testContext;
 		}
 		
-		var utils = this.utils;
-		var container = this;
-		jadi.run = function(){
-			var testExecutor = jadi.newInstance({
-				path : "jadi.test.Executor",
-				args : [utils, {
-						path : "jadi.test.Tester",
-						args : [utils],
-						selfFactoryAware : true
-					}, 
-					{
-						path : "jadi.test.TestContext",
-						args : [utils, "path:jadi.factory.injector", "path:jadi.aop.Interceptor"]
-					}]
-			});
-			testExecutor.addTestDefinitions(toTestDefinitions(arguments));
-			var label = "Total Test Run Time";
-			console.time(label);
-			var results = testExecutor.executes();
-			
+		var label = "Total Test Run Time";
+		
+		var waitForResult = function(results, next){
 			var intervalId = setInterval(function(){
 				for(var name in results){
 					var result = results[name];
@@ -213,10 +195,37 @@ exports.jadiTest = function (jadiInstance){
 					delete results[name];
 				}
 				clearInterval(intervalId);
+				if(next !== undefined){
+					next();
+					return;
+				}
 				console.log("===============================================");
 				console.timeEnd(label);
 			},100);
-			
+		}
+		
+		var utils = this.utils;
+		var container = this;
+		jadi.run = function(){
+			var testExecutor = jadi.newInstance({
+				path : "jadi.test.Executor",
+				args : [utils, {
+						path : "jadi.test.Tester",
+						args : [utils],
+						selfFactoryAware : true
+					}, 
+					{
+						path : "jadi.test.TestContext",
+						args : [utils, "path:jadi.factory.injector", "path:jadi.aop.Interceptor"]
+					}]
+			});
+			testExecutor.addTestDefinitions(toTestDefinitions(arguments));
+			console.time(label);
+			var results = testExecutor.executes("setup");
+			waitForResult(results, function(){
+				var results = testExecutor.executes("test");
+				waitForResult(results)
+			});
 		};
 		
 		return jadi;
