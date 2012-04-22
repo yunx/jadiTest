@@ -1,7 +1,7 @@
 "use strict";
 exports.jadiTest = function(jadiInstance) {
 	var jadi = jadiInstance || require("jadi").newInstance();
-
+	
 	jadi.clazz("jadi.test.Tester", function Tester(utils) {
 		var expectedException = undefined;
 		var testResult = {
@@ -237,7 +237,7 @@ exports.jadiTest = function(jadiInstance) {
 						continue;
 					}
 					if (!result.isPrinted) {
-						console.log(name);
+						logger.debug(name);
 						result.isPrinted = true;
 					}
 					for ( var i = 0; i < result.length; i++) {
@@ -249,10 +249,10 @@ exports.jadiTest = function(jadiInstance) {
 							return;
 						}
 						var finalResult = caseResult.getResult();
-						console.log((finalResult.pass ? "  Pass " : "  Fail") + "   "
+						logger.debug((finalResult.pass ? "  Pass " : "  Fail") + "   "
 								+ caseResult.method + " in " + finalResult.totalTime + "ms");
 						if (finalResult.error) {
-							console.log(finalResult.error.stack);
+							logger.debug(finalResult.error.stack);
 						}
 						delete result[i];
 					}
@@ -263,7 +263,7 @@ exports.jadiTest = function(jadiInstance) {
 					next();
 					return;
 				}
-				console.log("===============================================");
+				logger.debug("===============================================");
 				console.timeEnd(label);
 			}, 100);
 		}
