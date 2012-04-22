@@ -10,8 +10,9 @@ exports.jadiTest = function(jadiInstance) {
 		};
 		var started = 0;
 		var finished = 0;
+		var handledException = false;
 		var timer = {
-			tolerate : -1
+			tolerate : 1000
 		};
 		return {
 			proxy : function proxy(fn) {
@@ -19,11 +20,10 @@ exports.jadiTest = function(jadiInstance) {
 				started++;
 				return function() {
 					try {
-						if(timer.startTime === undefined){
+						if (timer.startTime === undefined) {
 							timer.startTime = new Date();
-						}						
+						}
 						fn.apply(that, arguments);
-						timer.endTime = new Date();
 						testResult.pass = true;
 					} catch (e) {
 						if (!that.expectException(e)) {
@@ -31,9 +31,12 @@ exports.jadiTest = function(jadiInstance) {
 							started = finished = 0;
 							return;
 						} else {
-							timer.endTime = new Date();
+							handledException = true;
 							testResult.pass = true;
 						}
+					}
+					finally{
+						timer.endTime = new Date();
 					}
 					finished++;
 				};
@@ -65,6 +68,7 @@ exports.jadiTest = function(jadiInstance) {
 				if (utils.isObject(e)) {
 					return e instanceof expectedException;
 				}
+
 				testResult.error = e;
 			},
 			getResultHolder : function() {
@@ -78,15 +82,23 @@ exports.jadiTest = function(jadiInstance) {
 						var error = new Error("exceeding maxium " + timer.tolerate + " ms");
 						return {
 							pass : false,
-							error : error
+							error : error,
+							totalTime : totalTime
 						};
 					}
 					if (started === finished) {
+						if (expectedException && !handledException) {
+							var error = new Error("expecting exception [" + expectedException+"]");
+							return {
+								pass : false,
+								error : error
+							};
+						}
 						testResult.totalTime = totalTime;
 						return testResult;
 					}
 					return undefined;
-				}
+				};
 			}
 		};
 	});
@@ -257,7 +269,6 @@ exports.jadiTest = function(jadiInstance) {
 		}
 
 		var utils = this.utils;
-		var container = this;
 		jadi.run = function() {
 			var testExecutor = jadi.newInstance({
 				path : "jadi.test.Executor",
