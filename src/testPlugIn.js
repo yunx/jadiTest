@@ -12,7 +12,7 @@ exports.jadiTest = function(jadiInstance) {
 		var finished = 0;
 		var handledException = false;
 		var timer = {
-			tolerate : 1000
+			tolerate : 10000000
 		};
 		return {
 			proxy : function proxy(fn) {
@@ -28,8 +28,6 @@ exports.jadiTest = function(jadiInstance) {
 					} catch (e) {
 						if (!that.expectException(e)) {
 							testResult.pass = false;
-							started = finished = 0;
-							return;
 						} else {
 							handledException = true;
 							testResult.pass = true;
@@ -37,8 +35,8 @@ exports.jadiTest = function(jadiInstance) {
 					}
 					finally{
 						timer.endTime = new Date();
+						finished++;
 					}
-					finished++;
 				};
 			},
 			setTimer : function(_timer) {
