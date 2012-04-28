@@ -3,6 +3,9 @@ exports.jadiTest = function(jadiInstance) {
 	var jadi = jadiInstance || require("jadi").newInstance();
 	
 	jadi.clazz("jadi.test.Tester", function Tester(utils) {
+		
+		var executable = undefined;
+		
 		var expectedException = undefined;
 		var testResult = {
 			pass : undefined,
@@ -71,6 +74,10 @@ exports.jadiTest = function(jadiInstance) {
 			},
 			getResultHolder : function() {
 				return function() {
+					if(executable !== undefined){
+						executable();
+						executable = undefined;
+					}
 					var endTime = new Date();
 					if (started === finished) {
 						endTime = timer.endTime;
@@ -97,6 +104,9 @@ exports.jadiTest = function(jadiInstance) {
 					}
 					return undefined;
 				};
+			},
+			setExecutable : function(_executable){
+				executable = _executable;
 			}
 		};
 	});
@@ -107,19 +117,19 @@ exports.jadiTest = function(jadiInstance) {
 		var getCia = function getCreateIfAbsent(obj, name) {
 			var val = obj[name] || (obj[name] = []);
 			return val;
-		}
+		};
 
 		return {
 			addCase : function(context, path, testCase, timer) {
 				var suiteName = context.suite || "default";
 				var methodParameters = injector.inject({}, context.injectMethods);
-				var testCase = aop.intercept(testCase, function(obj, methodName) {
+				testCase = aop.intercept(testCase, function(obj, methodName) {
 					var parameters = methodParameters[methodName];
 					var method = obj[methodName];
 					if (parameters !== undefined) {
 						return function() {
 							return method.apply(this, parameters);
-						}
+						};
 					}
 					return method;
 				});
@@ -153,7 +163,7 @@ exports.jadiTest = function(jadiInstance) {
 					var suit = suites[sname];
 					for ( var i = 0; i < suit.length; i++) {
 						var testCase = suit[i]["case"];
-						var path = suit[i]["path"]
+						var path = suit[i]["path"];
 						var timer = suit[i]['timer'];
 						for ( var name in testCase) {
 							if (name === undefined || name.indexOf(runMethodPrefix) !== 0) {
@@ -165,7 +175,8 @@ exports.jadiTest = function(jadiInstance) {
 								var clazzName = path + "." + name;
 								var tester = testerFactory.selfFactory.make();
 								tester.setTimer(methodTimer);
-								tester.proxy(caseMethod)();
+								var testExcutable = tester.proxy(caseMethod);
+								tester.setExecutable(testExcutable);
 								var holder = tester.getResultHolder();
 								results.push({
 									method : clazzName,
@@ -187,28 +198,29 @@ exports.jadiTest = function(jadiInstance) {
 			var timer = {};
 			for ( var name in def) {
 				(function(name, timeLimit) {
-					var timeLimit = parseInt(timeLimit);
+					timeLimit = parseInt(timeLimit);
 					if (isNaN(timeLimit)) {
 						return;
 					}
 					timer[name] = {
 						startTime : undefined,
 						tolerate : timeLimit
-					}
+					};
 				})(name, def[name]);
 			}
 			return timer;
-		}
+		};
 
 		function toTestDefinitions(contextFiles) {
 			var testContext = [];
 			for ( var i = 0; i < contextFiles.length; i++) {
 				var contextFile = contextFiles[i];
+				var beanDefinitions = undefined;
 				if (utils.isString(contextFile)) {
 					var filePath = require('path').resolve(contextFiles[i]);
-					var beanDefinitions = require(filePath).beanDefinitions;
+					beanDefinitions = require(filePath).beanDefinitions;
 				} else if (contextFile.path !== undefined) {
-					var beanDefinitions = [ contextFile ];
+					beanDefinitions = [ contextFile ];
 				}
 				for ( var j = 0; j < beanDefinitions.length; j++) {
 					var beanDefinition = beanDefinitions[j];
@@ -264,7 +276,7 @@ exports.jadiTest = function(jadiInstance) {
 				logger.debug("===============================================");
 				console.timeEnd(label);
 			}, 100);
-		}
+		};
 
 		var utils = this.utils;
 		jadi.run = function() {
@@ -290,4 +302,4 @@ exports.jadiTest = function(jadiInstance) {
 
 		return jadi;
 	});
-}
+};
