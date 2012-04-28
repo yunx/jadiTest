@@ -15,7 +15,7 @@ exports.jadiTest = function(jadiInstance) {
 		var finished = 0;
 		var handledException = false;
 		var timer = {
-			tolerate : 10000000
+			tolerate : 1000
 		};
 		return {
 			proxy : function proxy(fn) {
